@@ -1,0 +1,10 @@
+[02-Jun-2026 21:17:43 UTC] PHP Fatal error:  Uncaught Error: Class "Artisan" not found in /home/hybetxxr/hybetxxr/public_html/almsw.hyberthinksolutions.com/bootstrap/app.php:2
+Stack trace:
+#0 /home/hybetxxr/hybetxxr/public_html/almsw.hyberthinksolutions.com/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/hybetxxr/hybetxxr/public_html/almsw.hyberthinksolutions.com/bootstrap/app.php on line 2
+[02-Jun-2026 21:17:48 UTC] PHP Fatal error:  Uncaught Error: Class "Artisan" not found in /home/hybetxxr/hybetxxr/public_html/almsw.hyberthinksolutions.com/bootstrap/app.php:2
+Stack trace:
+#0 /home/hybetxxr/hybetxxr/public_html/almsw.hyberthinksolutions.com/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/hybetxxr/hybetxxr/public_html/almsw.hyberthinksolutions.com/bootstrap/app.php on line 2
