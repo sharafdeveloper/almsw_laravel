@@ -9,7 +9,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Customers</h2>
-                <p class="text-sm text-gray-500">Manage your clients and their llledgers</p>
+                <p class="text-sm text-gray-500">Manage your clients and their ledgers</p>
             </div>
             <div class="flex items-center gap-2">
                 <div class="relative" x-data="customerSearch()">
