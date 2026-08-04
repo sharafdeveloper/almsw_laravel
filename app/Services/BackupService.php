@@ -26,7 +26,7 @@ class BackupService
         $file = $backupPath . DIRECTORY_SEPARATOR . $filename;
 
         // XAMPP mysqldump location
-        $mysqldump = 'C:\\xampp\\mysql\\bin\\mysqldump.exe';
+        $mysqldump = '/usr/bin/mysqldump';
 
         $command = "\"{$mysqldump}\" "
             . "--host={$host} "
