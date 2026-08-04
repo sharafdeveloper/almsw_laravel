@@ -8,8 +8,8 @@
         <!-- Page Heading -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Backupppppppppp & Restore</h2>
-                <p class="text-sm text-gray-500">Manage databaseeeeeeeeeeeeeeee and application backups securely</p>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Backup & Restore</h2>
+                <p class="text-sm text-gray-500">Manage database and application backups securely</p>
             </div>
         </div>
  
