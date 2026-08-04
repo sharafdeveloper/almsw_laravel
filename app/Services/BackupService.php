@@ -41,9 +41,14 @@ class BackupService
 
         exec($command, $output, $result);
 
+        // if ($result !== 0 || !File::exists($file)) {
+        //     throw new \Exception('Database backup failed.');
+        // }
         if ($result !== 0 || !File::exists($file)) {
-            throw new \Exception('Database backup failed.');
-        }
+         throw new \Exception(
+        "Exit Code: {$result}\n\nCommand:\n{$command}\n\nOutput:\n" . implode("\n", $output)
+        );
+    }
         
         Backup::create([
             'file_name' => basename($file),
