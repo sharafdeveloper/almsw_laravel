@@ -39,14 +39,6 @@ class BackupService
 
         $command .= "{$database} > \"{$file}\"";
 
-        dd(
-    $database,
-    $username,
-    $password,
-    $host,
-    $port,
-    $command
-);
 
         exec($command, $output, $result);
 
