@@ -28,16 +28,17 @@ class BackupService
         // XAMPP mysqldump location
         $mysqldump = '/usr/bin/mysqldump';
 
-        $command = "\"{$mysqldump}\" "
-            . "--host={$host} "
-            . "--port={$port} "
-            . "--user={$username} ";
+        $command = escapeshellcmd($mysqldump)
+    . ' --host=' . escapeshellarg($host)
+    . ' --port=' . escapeshellarg($port)
+    . ' --user=' . escapeshellarg($username);
 
-        if (!empty($password)) {
-            $command .= "--password={$password} ";
-        }
+if (!empty($password)) {
+    $command .= ' --password=' . escapeshellarg($password);
+}
 
-        $command .= "{$database} > \"{$file}\"";
+$command .= ' ' . escapeshellarg($database);
+$command .= ' > ' . escapeshellarg($file);
 
 
         exec($command, $output, $result);
