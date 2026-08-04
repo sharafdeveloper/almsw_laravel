@@ -138,9 +138,22 @@ public function restoreExecute(Request $request)
 
     public function database()
     {
+        // $file = $this->backupService->databaseBackup();
+
+        // return response()->download($file)->deleteFileAfterSend(false);
+
+         try {
         $file = $this->backupService->databaseBackup();
 
         return response()->download($file)->deleteFileAfterSend(false);
+
+    } catch (\Throwable $e) {
+        dd([
+            'message' => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine(),
+        ]);
+    }
     }
 
 
