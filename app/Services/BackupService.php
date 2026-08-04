@@ -9,11 +9,11 @@ class BackupService
 {
     public function databaseBackup()
     {
-        $database = env('DB_DATABASE');
-        $username = env('DB_USERNAME');
-        $password = env('DB_PASSWORD');
-        $host     = env('DB_HOST');
-        $port     = env('DB_PORT');
+        $database = config('database.connections.mysql.database');
+        $username = config('database.connections.mysql.username');
+        $password = config('database.connections.mysql.password');
+        $host     = config('database.connections.mysql.host');
+        $port     = config('database.connections.mysql.port');
 
         $filename = 'database_' . date('Y-m-d_H-i-s') . '.sql';
 
