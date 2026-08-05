@@ -26,7 +26,9 @@ class RestoreService
         $port     = config('database.connections.mysql.port');
 
         // XAMPP mysql.exe location
-        $mysql = 'C:\\xampp\\mysql\\bin\\mysql.exe';
+        $mysql = PHP_OS_FAMILY === 'Windows'
+    ? 'C:\\xampp\\mysql\\bin\\mysql.exe'
+    : '/usr/bin/mysql';
 
         // Build restore command
         $command = "\"{$mysql}\" "
@@ -40,11 +42,13 @@ class RestoreService
 
         $command .= "{$database} < \"{$backupFile}\"";
 
-        exec($command, $output, $result);
+       exec($command . ' 2>&1', $output, $result);
 
-        if ($result !== 0) {
-            throw new \Exception('Database restore failed.');
-        }
+if ($result !== 0) {
+    throw new \Exception(
+        "Database restore failed.\n\nCommand:\n{$command}\n\nOutput:\n" . implode("\n", $output)
+    );
+}
 
         return true;
     }
