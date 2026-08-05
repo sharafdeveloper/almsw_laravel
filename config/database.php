@@ -59,7 +59,9 @@ return [
             'engine' => null,
 
             'dump' => [
-                'dump_binary_path' => 'C:\xampp\mysql\bin',
+                'dump' => [
+    'dump_binary_path' => '/usr/bin',
+],
     ],
 
             'options' => extension_loaded('pdo_mysql') ? array_filter([
