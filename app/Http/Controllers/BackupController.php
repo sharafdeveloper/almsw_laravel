@@ -175,6 +175,8 @@ public function restoreExecute(Request $request)
 
     public function fullBackup()
     {
+        dd('Full Application Backup Controller Hit');
+        
         Artisan::call('backup:run');
 
         $disk = Storage::disk('local');
