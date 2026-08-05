@@ -175,6 +175,25 @@ public function restoreExecute(Request $request)
 
     public function fullBackup()
     {
+        try {
+
+        Artisan::call('backup:run');
+
+        dd([
+            'artisan_output' => Artisan::output(),
+            'files' => Storage::disk('local')->allFiles(),
+        ]);
+
+    } catch (\Throwable $e) {
+
+        dd([
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'output' => Artisan::output(),
+        ]);
+
+    }
         
         Artisan::call('backup:run');
 
