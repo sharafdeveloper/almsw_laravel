@@ -59,10 +59,10 @@ return [
             'engine' => null,
 
             'dump' => [
-                'dump' => [
-    'dump_binary_path' => '/usr/bin',
+    'dump_binary_path' => PHP_OS_FAMILY === 'Windows'
+        ? 'C:\xampp\mysql\bin'
+        : '/usr/bin',
 ],
-    ],
 
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
