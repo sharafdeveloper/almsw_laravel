@@ -171,7 +171,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Schedule::command('backup:auto')
             ->dailyAt('23:00');
     
-
+    Route::view('/test-file-access', 'test-file-access');
    
 
 });
