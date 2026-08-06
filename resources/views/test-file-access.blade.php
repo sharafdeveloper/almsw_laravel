@@ -11,6 +11,8 @@
 <button id="btnSelect">Select Root Folder</button>
 
 <button id="btnCheck">Check Saved Folder</button>
+
+<button id="btnSave">Save Test File</button>
 <script>
 
 let rootHandle = null;
@@ -18,9 +20,9 @@ let rootHandle = null;
 const DB_NAME = "POSFileAccess";
 const STORE_NAME = "handles";
 
-/* ---------------------- */
-/* IndexedDB Helpers */
-/* ---------------------- */
+/* ===========================
+   OPEN DATABASE
+=========================== */
 
 function openDB() {
 
@@ -28,27 +30,23 @@ function openDB() {
 
         const request = indexedDB.open(DB_NAME, 1);
 
-        request.onupgradeneeded = function () {
+        request.onupgradeneeded = () => {
 
             request.result.createObjectStore(STORE_NAME);
 
         };
 
-        request.onsuccess = function () {
+        request.onsuccess = () => resolve(request.result);
 
-            resolve(request.result);
-
-        };
-
-        request.onerror = function () {
-
-            reject(request.error);
-
-        };
+        request.onerror = () => reject(request.error);
 
     });
 
 }
+
+/* ===========================
+   SAVE HANDLE
+=========================== */
 
 async function saveHandle(handle) {
 
@@ -68,6 +66,10 @@ async function saveHandle(handle) {
 
 }
 
+/* ===========================
+   LOAD HANDLE
+=========================== */
+
 async function loadHandle() {
 
     const db = await openDB();
@@ -86,9 +88,9 @@ async function loadHandle() {
 
 }
 
-/* ---------------------- */
-/* Select Folder */
-/* ---------------------- */
+/* ===========================
+   SELECT ROOT FOLDER
+=========================== */
 
 document.getElementById("btnSelect").addEventListener("click", async () => {
 
@@ -98,7 +100,7 @@ document.getElementById("btnSelect").addEventListener("click", async () => {
 
         await saveHandle(rootHandle);
 
-        alert("Folder saved in IndexedDB successfully.");
+        alert("Root Folder Saved Successfully.");
 
     }
 
@@ -110,55 +112,71 @@ document.getElementById("btnSelect").addEventListener("click", async () => {
 
 });
 
-/* ---------------------- */
-/* Check Saved Folder */
-/* ---------------------- */
+/* ===========================
+   SAVE TEST FILE
+=========================== */
 
-document.getElementById("btnCheck").addEventListener("click", async () => {
+document.getElementById("btnSave").addEventListener("click", async () => {
 
     try {
 
-        const handle = await loadHandle();
+        let handle = await loadHandle();
 
         if (!handle) {
 
-            alert("No folder saved.");
+            alert("Please select root folder first.");
 
             return;
 
         }
 
-        console.log(handle);
-
         let permission = await handle.queryPermission({
-    mode: "readwrite"
-});
+            mode: "readwrite"
+        });
 
-if (permission !== "granted") {
+        if (permission !== "granted") {
 
-    permission = await handle.requestPermission({
-        mode: "readwrite"
-    });
+            permission = await handle.requestPermission({
+                mode: "readwrite"
+            });
 
-}
+        }
 
-alert("Permission Status : " + permission);
+        if (permission !== "granted") {
 
-if (permission === "granted") {
+            alert("Permission denied.");
 
-    console.log("Permission Granted");
+            return;
 
-} else {
+        }
 
-    console.log("Permission Denied");
+        const fileHandle = await handle.getFileHandle("test2.txt", {
+            create: true
+        });
 
-}
+        const writable = await fileHandle.createWritable();
+
+        await writable.write(`Congratulations!
+
+IndexedDB loaded the folder successfully.
+
+Date:
+${new Date().toLocaleString()}
+
+This file was created WITHOUT selecting the folder again.
+`);
+
+        await writable.close();
+
+        alert("test2.txt created successfully.");
 
     }
 
     catch (e) {
 
         console.error(e);
+
+        alert(e.message);
 
     }
 
