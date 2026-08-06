@@ -10,56 +10,141 @@
 
 <button id="btnSelect">Select Root Folder</button>
 
+<button id="btnCheck">Check Saved Folder</button>
 <script>
 
 let rootHandle = null;
 
-// Select Folder
-document.getElementById('btnSelect').addEventListener('click', async () => {
+const DB_NAME = "POSFileAccess";
+const STORE_NAME = "handles";
+
+/* ---------------------- */
+/* IndexedDB Helpers */
+/* ---------------------- */
+
+function openDB() {
+
+    return new Promise((resolve, reject) => {
+
+        const request = indexedDB.open(DB_NAME, 1);
+
+        request.onupgradeneeded = function () {
+
+            request.result.createObjectStore(STORE_NAME);
+
+        };
+
+        request.onsuccess = function () {
+
+            resolve(request.result);
+
+        };
+
+        request.onerror = function () {
+
+            reject(request.error);
+
+        };
+
+    });
+
+}
+
+async function saveHandle(handle) {
+
+    const db = await openDB();
+
+    return new Promise((resolve, reject) => {
+
+        const tx = db.transaction(STORE_NAME, "readwrite");
+
+        tx.objectStore(STORE_NAME).put(handle, "rootDir");
+
+        tx.oncomplete = () => resolve();
+
+        tx.onerror = () => reject(tx.error);
+
+    });
+
+}
+
+async function loadHandle() {
+
+    const db = await openDB();
+
+    return new Promise((resolve, reject) => {
+
+        const tx = db.transaction(STORE_NAME, "readonly");
+
+        const request = tx.objectStore(STORE_NAME).get("rootDir");
+
+        request.onsuccess = () => resolve(request.result ?? null);
+
+        request.onerror = () => reject(request.error);
+
+    });
+
+}
+
+/* ---------------------- */
+/* Select Folder */
+/* ---------------------- */
+
+document.getElementById("btnSelect").addEventListener("click", async () => {
 
     try {
 
         rootHandle = await window.showDirectoryPicker();
 
-        console.log(rootHandle);
+        await saveHandle(rootHandle);
 
-        alert("Folder Selected Successfully");
+        alert("Folder saved in IndexedDB successfully.");
 
-        await saveTestFile();
+    }
 
-    } catch (e) {
+    catch (e) {
 
         console.error(e);
-
-        alert(e.message);
 
     }
 
 });
 
+/* ---------------------- */
+/* Check Saved Folder */
+/* ---------------------- */
 
-async function saveTestFile() {
+document.getElementById("btnCheck").addEventListener("click", async () => {
 
-    const fileHandle = await rootHandle.getFileHandle("test.txt", {
-        create: true
-    });
+    try {
 
-    const writable = await fileHandle.createWritable();
+        const handle = await loadHandle();
 
-    await writable.write(`Hello Suleman
+        if (!handle) {
 
-This file was created from your Laravel POS.
+            alert("No folder saved.");
 
-Date: ${new Date().toLocaleString()}
+            return;
 
-File System Access API Working Successfully.
-`);
+        }
 
-    await writable.close();
+        console.log(handle);
 
-    alert("test.txt created successfully!");
+        const permission = await handle.queryPermission({
+            mode: "readwrite"
+        });
 
-}
+        alert("Permission Status : " + permission);
+
+    }
+
+    catch (e) {
+
+        console.error(e);
+
+    }
+
+});
 
 </script>
 
