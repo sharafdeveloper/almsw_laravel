@@ -130,11 +130,29 @@ document.getElementById("btnCheck").addEventListener("click", async () => {
 
         console.log(handle);
 
-        const permission = await handle.queryPermission({
-            mode: "readwrite"
-        });
+        let permission = await handle.queryPermission({
+    mode: "readwrite"
+});
 
-        alert("Permission Status : " + permission);
+if (permission !== "granted") {
+
+    permission = await handle.requestPermission({
+        mode: "readwrite"
+    });
+
+}
+
+alert("Permission Status : " + permission);
+
+if (permission === "granted") {
+
+    console.log("Permission Granted");
+
+} else {
+
+    console.log("Permission Denied");
+
+}
 
     }
 
