@@ -111,6 +111,30 @@ class SaleInvoiceController extends Controller
         // Fallback: HTML view that auto-opens the browser print dialog.
         return view('admin.sale-invoice-print', $data + ['browserPrint' => true]);
     }
+    //testing just testing 
+    public function printLocal(SaleInvoice $sale_invoice)
+{
+    $sale_invoice->load(['items.product', 'customer']);
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+        'admin.sale-invoice-print',
+        ['invoice' => $sale_invoice]
+    )->setPaper('a5', 'portrait');
+
+    $customerName = optional($sale_invoice->customer)->name ?? 'Unknown';
+
+    $filename = sprintf(
+        '%s_%s_%s.pdf',
+        $sale_invoice->formattedId(),
+        preg_replace('/[^A-Za-z0-9_-]/', '_', $customerName),
+        now()->format('Y-m-d')
+    );
+
+    return response($pdf->output(), 200)
+        ->header('Content-Type', 'application/pdf')
+        ->header('X-Invoice-Filename', $filename)
+        ->header('X-Customer-Name', $customerName);
+}
 
     /* ---------- helpers ---------- */
 
