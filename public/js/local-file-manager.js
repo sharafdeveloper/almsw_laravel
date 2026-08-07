@@ -136,57 +136,39 @@ const POSFileManager = (() => {
 
     async function saveBlob(filename, blob, folders = []) {
 
-        const rootHandle = await getRootHandle();
+    const rootHandle = await getRootHandle();
 
-        let currentHandle = rootHandle;
+    let currentHandle = rootHandle;
 
+    for (const folderName of folders) {
 
-        /*
-         * Create / open folder structure
-         *
-         * Example:
-         *
-         * date
-         *   └── Sale Invoice
-         *       └── Imran
-         */
-
-        for (const folderName of folders) {
-
-            if (!folderName) {
-                continue;
-            }
-
-            currentHandle =
-                await getOrCreateFolder(
-                    currentHandle,
-                    folderName
-                );
-
+        if (!folderName) {
+            continue;
         }
 
-
-        const fileHandle =
-            await currentHandle.getFileHandle(
-                filename,
-                {
-                    create: true
-                }
-            );
-
-
-        const writable =
-            await fileHandle.createWritable();
-
-
-        await writable.write(blob);
-
-        await writable.close();
-
-
-        return true;
-
+        currentHandle = await currentHandle.getDirectoryHandle(
+            folderName,
+            {
+                create: true
+            }
+        );
     }
+
+    const fileHandle = await currentHandle.getFileHandle(
+        filename,
+        {
+            create: true
+        }
+    );
+
+    const writable = await fileHandle.createWritable();
+
+    await writable.write(blob);
+
+    await writable.close();
+
+    return true;
+}
 
 
     async function selectRootFolder() {
