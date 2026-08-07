@@ -128,10 +128,9 @@
             }
         }
     }
-</script>
-<script src="{{ asset('js/local-file-manager.js') }}">
-    <script>
+<script src="{{ asset('js/local-file-manager.js') }}"></script>
 
+<script>
 document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll(".local-pdf-test").forEach(button => {
@@ -147,26 +146,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 button.innerHTML =
                     '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
 
-                const url =
-                    button.dataset.url;
+                const url = button.dataset.url;
+                const invoiceId = button.dataset.invoiceId;
+                const customerName = button.dataset.customer || "Unknown";
 
-                const invoiceId =
-                    button.dataset.invoiceId;
-
-                const customerName =
-                    button.dataset.customer || "Unknown";
-
-                /*
-                 * Fetch PDF from Laravel
-                 */
-
-                const response =
-                    await fetch(url, {
-                        method: "GET",
-                        headers: {
-                            "Accept": "application/pdf"
-                        }
-                    });
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/pdf"
+                    }
+                });
 
                 if (!response.ok) {
                     throw new Error(
@@ -174,25 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     );
                 }
 
-                /*
-                 * Convert response to Blob
-                 */
-
-                const blob =
-                    await response.blob();
-
-                /*
-                 * Clean customer folder name
-                 */
+                const blob = await response.blob();
 
                 const safeCustomerName =
                     customerName
                         .trim()
                         .replace(/[<>:"/\\|?*]/g, "_");
-
-                /*
-                 * Filename
-                 */
 
                 const today =
                     new Date()
@@ -201,16 +177,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const filename =
                     `${invoiceId}_${safeCustomerName}_${today}.pdf`;
-
-                /*
-                 * Save locally
-                 *
-                 * Root folder
-                 *    ↓
-                 * Sale Invoice
-                 *    ↓
-                 * Customer
-                 */
 
                 await POSFileManager.saveBlob(
                     filename,
@@ -241,15 +207,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
                 button.disabled = false;
-
             }
-
         });
-
     });
-
 });
+</script>
 
-</script>
-</script>
 @endsection
