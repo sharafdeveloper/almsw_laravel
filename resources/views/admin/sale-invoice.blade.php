@@ -68,6 +68,13 @@
                             <td class="px-4 py-3 text-sm text-right whitespace-nowrap">Rs {{ number_format((float)$inv->cash_received, 2) }}</td>
                             <td class="px-4 py-3 text-sm text-right space-x-1 whitespace-nowrap">
                                 <a href="{{ route('sale-invoice.print', $inv) }}" class="inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs" target="_blank"><i class="fa-solid fa-print mr-1"></i> Print</a>
+
+                                <a href="{{ route('sale-invoice.print-local', $inv) }}"
+   class="inline-flex px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs"
+   target="_blank">
+    <i class="fa-solid fa-download mr-1"></i> Local PDF Test
+</a>
+
                                 @if(auth()->check() && auth()->user()->isAdmin())
                                     <a href="{{ route('sale-invoice.edit', $inv) }}" class="inline-flex px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs"><i class="fa-solid fa-pen mr-1"></i> Edit</a>
                                     <button @click="deletingId={{ $inv->id }}; deletingLabel='{{ $inv->formattedId() }}'; showDelete=true" class="inline-flex px-2 py-1 bg-red-50 text-red-700 rounded text-xs"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
