@@ -2,6 +2,7 @@ const POSFileManager = (() => {
 
     const DB_NAME = "POSFileAccess";
     const STORE_NAME = "handles";
+    const ROOT_KEY = "rootDir";
 
     function openDB() {
         return new Promise((resolve, reject) => {
@@ -9,25 +10,64 @@ const POSFileManager = (() => {
             const request = indexedDB.open(DB_NAME, 1);
 
             request.onupgradeneeded = () => {
-                request.result.createObjectStore(STORE_NAME);
+
+                const db = request.result;
+
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+
             };
 
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                reject(request.error);
+            };
 
         });
     }
 
-    async function loadRootHandle() {
+
+    async function saveHandle(handle) {
 
         const db = await openDB();
 
         return new Promise((resolve, reject) => {
 
-            const tx = db.transaction(STORE_NAME, "readonly");
+            const transaction =
+                db.transaction(STORE_NAME, "readwrite");
+
+            transaction.objectStore(STORE_NAME)
+                .put(handle, ROOT_KEY);
+
+            transaction.oncomplete = () => {
+                resolve();
+            };
+
+            transaction.onerror = () => {
+                reject(transaction.error);
+            };
+
+        });
+
+    }
+
+
+    async function loadHandle() {
+
+        const db = await openDB();
+
+        return new Promise((resolve, reject) => {
+
+            const transaction =
+                db.transaction(STORE_NAME, "readonly");
 
             const request =
-                tx.objectStore(STORE_NAME).get("rootDir");
+                transaction.objectStore(STORE_NAME)
+                .get(ROOT_KEY);
 
             request.onsuccess = () => {
                 resolve(request.result || null);
@@ -38,81 +78,143 @@ const POSFileManager = (() => {
             };
 
         });
+
     }
 
-    async function ensurePermission(handle) {
 
-        let permission = await handle.queryPermission({
-            mode: "readwrite"
-        });
+    async function getRootHandle() {
 
-        if (permission === "granted") {
-            return true;
+        let handle = await loadHandle();
+
+        if (!handle) {
+
+            handle = await window.showDirectoryPicker({
+                mode: "readwrite"
+            });
+
+            await saveHandle(handle);
+
+            return handle;
         }
 
-        permission = await handle.requestPermission({
-            mode: "readwrite"
-        });
 
-        return permission === "granted";
+        let permission =
+            await handle.queryPermission({
+                mode: "readwrite"
+            });
+
+
+        if (permission === "granted") {
+            return handle;
+        }
+
+
+        permission =
+            await handle.requestPermission({
+                mode: "readwrite"
+            });
+
+
+        if (permission !== "granted") {
+            throw new Error(
+                "Folder permission was not granted."
+            );
+        }
+
+        return handle;
+
     }
+
 
     async function getOrCreateFolder(parentHandle, folderName) {
 
         return await parentHandle.getDirectoryHandle(
             folderName,
-            { create: true }
+            {
+                create: true
+            }
         );
+
     }
 
-    async function saveBlob(fileName, blob, folders = []) {
 
-        const rootHandle = await loadRootHandle();
+    async function saveBlob(filename, blob, folders = []) {
 
-        if (!rootHandle) {
-            throw new Error(
-                "Root folder is not configured. Please select your root folder first."
-            );
-        }
-
-        const permission =
-            await ensurePermission(rootHandle);
-
-        if (!permission) {
-            throw new Error(
-                "Permission to write files was denied."
-            );
-        }
+        const rootHandle = await getRootHandle();
 
         let currentHandle = rootHandle;
 
-        for (const folder of folders) {
+
+        /*
+         * Create / open folder structure
+         *
+         * Example:
+         *
+         * date
+         *   └── Sale Invoice
+         *       └── Imran
+         */
+
+        for (const folderName of folders) {
+
+            if (!folderName) {
+                continue;
+            }
 
             currentHandle =
                 await getOrCreateFolder(
                     currentHandle,
-                    folder
+                    folderName
                 );
+
         }
+
 
         const fileHandle =
             await currentHandle.getFileHandle(
-                fileName,
-                { create: true }
+                filename,
+                {
+                    create: true
+                }
             );
+
 
         const writable =
             await fileHandle.createWritable();
+
 
         await writable.write(blob);
 
         await writable.close();
 
+
         return true;
+
     }
 
+
+    async function selectRootFolder() {
+
+        const handle =
+            await window.showDirectoryPicker({
+                mode: "readwrite"
+            });
+
+        await saveHandle(handle);
+
+        return handle;
+
+    }
+
+
     return {
-        saveBlob
+
+        saveBlob,
+
+        selectRootFolder,
+
+        getRootHandle
+
     };
 
 })();
