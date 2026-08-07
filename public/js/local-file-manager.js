@@ -84,46 +84,42 @@ const POSFileManager = (() => {
 
     async function getRootHandle() {
 
-        let handle = await loadHandle();
+    let handle = await loadHandle();
 
-        if (!handle) {
+    // First time: ask user to select root folder
+    if (!handle) {
 
-            handle = await window.showDirectoryPicker({
-                mode: "readwrite"
-            });
+        handle = await window.showDirectoryPicker({
+            mode: "readwrite"
+        });
 
-            await saveHandle(handle);
-
-            return handle;
-        }
-
-
-        let permission =
-            await handle.queryPermission({
-                mode: "readwrite"
-            });
-
-
-        if (permission === "granted") {
-            return handle;
-        }
-
-
-        permission =
-            await handle.requestPermission({
-                mode: "readwrite"
-            });
-
-
-        if (permission !== "granted") {
-            throw new Error(
-                "Folder permission was not granted."
-            );
-        }
+        await saveHandle(handle);
 
         return handle;
-
     }
+
+    // Check existing permission
+    let permission = await handle.queryPermission({
+        mode: "readwrite"
+    });
+
+    if (permission === "granted") {
+        return handle;
+    }
+
+    // Ask again if permission expired
+    permission = await handle.requestPermission({
+        mode: "readwrite"
+    });
+
+    if (permission === "granted") {
+        return handle;
+    }
+
+    throw new Error(
+        "Root folder permission was not granted."
+    );
+}
 
 
     async function getOrCreateFolder(parentHandle, folderName) {
