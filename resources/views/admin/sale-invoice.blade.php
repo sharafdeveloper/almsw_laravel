@@ -212,5 +212,89 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 </script>
+<script src="{{ asset('js/local-file-manager.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
 
+    document.querySelectorAll(".local-pdf-test").forEach(button => {
+
+        button.addEventListener("click", async () => {
+
+            try {
+
+                button.disabled = true;
+
+                const originalText = button.innerHTML;
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+                const url = button.dataset.url;
+                const invoiceId = button.dataset.invoiceId;
+                const customerName =
+                    button.dataset.customer || "Unknown";
+
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/pdf"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        `PDF request failed: ${response.status}`
+                    );
+                }
+
+                const blob = await response.blob();
+
+                const safeCustomerName =
+                    customerName
+                        .trim()
+                        .replace(/[<>:"/\\|?*]/g, "_");
+
+                const today =
+                    new Date().toISOString().slice(0, 10);
+
+                const filename =
+                    `${invoiceId}_${safeCustomerName}_${today}.pdf`;
+
+                await POSFileManager.saveBlob(
+                    filename,
+                    blob,
+                    [
+                        "Sale Invoice",
+                        safeCustomerName
+                    ]
+                );
+
+                alert(
+                    `Invoice saved successfully!\n\n${filename}`
+                );
+
+                button.innerHTML = originalText;
+                button.disabled = false;
+
+            } catch (error) {
+
+                console.error(
+                    "Local PDF Save Error:",
+                    error
+                );
+
+                alert(
+                    "Could not save invoice:\n\n" +
+                    error.message
+                );
+
+                button.disabled = false;
+            }
+
+        });
+
+    });
+
+});
+</script>
 @endsection
