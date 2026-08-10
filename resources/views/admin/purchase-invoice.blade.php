@@ -63,7 +63,17 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm text-right whitespace-nowrap">Rs {{ number_format((float)$inv->total_amount, 2) }}</td>
                                 <td class="px-4 py-3 text-sm text-right space-x-1 whitespace-nowrap">
-                                    <a href="{{ route('purchase-invoice.print', $inv) }}" class="inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs" target="_blank"><i class="fa-solid fa-print mr-1"></i> Print</a>
+                                    <a href="{{ route('purchase-invoice.print', $inv) }}"
+   class="purchase-print-btn inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs"
+   data-url="{{ route('purchase-invoice.print-local', $inv) }}"
+   data-invoice-id="{{ $inv->formattedId() }}"
+   data-supplier="{{ optional($inv->supplier)->name ?? 'Unknown' }}">
+
+    <i class="fa-solid fa-print mr-1"></i>
+    Print
+
+</a>
+                                    <!-- <a href="{{ route('purchase-invoice.print', $inv) }}" class="inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs" target="_blank"><i class="fa-solid fa-print mr-1"></i> Print</a> -->
                                     <a href="{{ route('purchase-invoice.edit', $inv) }}" class="inline-flex px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs"><i class="fa-solid fa-pen mr-1"></i> Edit</a>
                                     <button type="button" @click="deletingId={{ $inv->id }}; deletingLabel='{{ $inv->formattedId() }}'; showDelete=true" class="inline-flex px-2 py-1 bg-red-50 text-red-700 rounded text-xs"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
                                 </td>
@@ -114,5 +124,176 @@
             }
         }
     }
+    <script src="{{ asset('js/local-file-manager.js') }}"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    document.querySelectorAll(".purchase-print-btn").forEach(button => {
+
+        button.addEventListener("click", async (event) => {
+
+            event.preventDefault();
+
+            const originalText = button.innerHTML;
+
+            try {
+
+                button.disabled = true;
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | URLs and invoice information
+                |--------------------------------------------------------------------------
+                */
+
+                const printUrl = button.href;
+
+                const localPdfUrl = button.dataset.url;
+
+                const invoiceId =
+                    button.dataset.invoiceId;
+
+                const supplierName =
+                    button.dataset.supplier || "Unknown";
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Fetch PDF
+                |--------------------------------------------------------------------------
+                */
+
+                const response = await fetch(localPdfUrl, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/pdf"
+                    }
+                });
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `PDF request failed: ${response.status}`
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Convert PDF to Blob
+                |--------------------------------------------------------------------------
+                */
+
+                const blob = await response.blob();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Safe supplier name
+                |--------------------------------------------------------------------------
+                */
+
+                const safeSupplierName =
+                    supplierName
+                        .trim()
+                        .replace(/[<>:"/\\|?*]/g, "_");
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Date
+                |--------------------------------------------------------------------------
+                */
+
+                const today =
+                    new Date()
+                        .toISOString()
+                        .slice(0, 10);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Filename
+                |--------------------------------------------------------------------------
+                */
+
+                const filename =
+                    `${invoiceId}_${safeSupplierName}_${today}.pdf`;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Save PDF
+                |--------------------------------------------------------------------------
+                */
+
+                await POSFileManager.saveBlob(
+                    filename,
+                    blob,
+                    [
+                        "Purchase Invoice"
+                    ]
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Success
+                |--------------------------------------------------------------------------
+                */
+
+                alert(
+                    `Purchase Invoice saved successfully!\n\n${filename}`
+                );
+
+
+                button.innerHTML = originalText;
+
+                button.disabled = false;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Open existing print page
+                |--------------------------------------------------------------------------
+                */
+
+                window.open(
+                    printUrl,
+                    "_blank"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Purchase Invoice Local PDF Error:",
+                    error
+                );
+
+
+                alert(
+                    "Could not save Purchase Invoice:\n\n" +
+                    error.message
+                );
+
+
+                button.innerHTML = originalText;
+
+                button.disabled = false;
+            }
+
+        });
+
+    });
+
+});
+</script>
+
 </script>
 @endsection
