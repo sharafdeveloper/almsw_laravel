@@ -126,6 +126,174 @@
     }
     <script src="{{ asset('js/local-file-manager.js') }}"></script>
     <script>
+// document.addEventListener("DOMContentLoaded", () => {
+
+//     document.querySelectorAll(".purchase-print-btn").forEach(button => {
+
+//         button.addEventListener("click", async (event) => {
+
+//             event.preventDefault();
+
+//             const originalText = button.innerHTML;
+
+//             try {
+
+//                 button.disabled = true;
+
+//                 button.innerHTML =
+//                     '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | URLs and invoice information
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 const printUrl = button.href;
+
+//                 const localPdfUrl = button.dataset.url;
+
+//                 const invoiceId =
+//                     button.dataset.invoiceId;
+
+//                 const supplierName =
+//                     button.dataset.supplier || "Unknown";
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Fetch PDF
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 const response = await fetch(localPdfUrl, {
+//                     method: "GET",
+//                     headers: {
+//                         "Accept": "application/pdf"
+//                     }
+//                 });
+
+
+//                 if (!response.ok) {
+
+//                     throw new Error(
+//                         `PDF request failed: ${response.status}`
+//                     );
+//                 }
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Convert PDF to Blob
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 const blob = await response.blob();
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Safe supplier name
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 const safeSupplierName =
+//                     supplierName
+//                         .trim()
+//                         .replace(/[<>:"/\\|?*]/g, "_");
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Date
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 const today =
+//                     new Date()
+//                         .toISOString()
+//                         .slice(0, 10);
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Filename
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 const filename =
+//                     `${invoiceId}_${safeSupplierName}_${today}.pdf`;
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Save PDF
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 await POSFileManager.saveBlob(
+//                     filename,
+//                     blob,
+//                     [
+//                         "Purchase Invoice"
+//                     ]
+//                 );
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Success
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 alert(
+//                     `Purchase Invoice saved successfully!\n\n${filename}`
+//                 );
+
+
+//                 button.innerHTML = originalText;
+
+//                 button.disabled = false;
+
+
+//                 /*
+//                 |--------------------------------------------------------------------------
+//                 | Open existing print page
+//                 |--------------------------------------------------------------------------
+//                 */
+
+//                 window.open(
+//                     printUrl,
+//                     "_blank"
+//                 );
+
+
+//             } catch (error) {
+
+//                 console.error(
+//                     "Purchase Invoice Local PDF Error:",
+//                     error
+//                 );
+
+
+//                 alert(
+//                     "Could not save Purchase Invoice:\n\n" +
+//                     error.message
+//                 );
+
+
+//                 button.innerHTML = originalText;
+
+//                 button.disabled = false;
+//             }
+
+//         });
+
+//     });
+
+// });
+// </script>
 document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll(".purchase-print-btn").forEach(button => {
@@ -138,21 +306,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
 
+                /*
+                |--------------------------------------------------------------------------
+                | Disable Button
+                |--------------------------------------------------------------------------
+                */
+
                 button.disabled = true;
 
                 button.innerHTML =
-                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Preparing...';
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | URLs and invoice information
+                | Get Button Data
                 |--------------------------------------------------------------------------
                 */
 
-                const printUrl = button.href;
+                const printUrl =
+                    button.href;
 
-                const localPdfUrl = button.dataset.url;
+                const localPdfUrl =
+                    button.dataset.url;
 
                 const invoiceId =
                     button.dataset.invoiceId;
@@ -163,17 +339,76 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | Fetch PDF
+                | Validate Data
                 |--------------------------------------------------------------------------
                 */
 
-                const response = await fetch(localPdfUrl, {
-                    method: "GET",
-                    headers: {
-                        "Accept": "application/pdf"
-                    }
-                });
+                if (!localPdfUrl) {
 
+                    throw new Error(
+                        "Purchase Invoice PDF URL is missing."
+                    );
+                }
+
+
+                if (!invoiceId) {
+
+                    throw new Error(
+                        "Purchase Invoice ID is missing."
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | IMPORTANT
+                |
+                | Get Root Folder BEFORE fetch().
+                |
+                | showDirectoryPicker() needs user activation.
+                |--------------------------------------------------------------------------
+                */
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-folder-open mr-1"></i> Checking Folder...';
+
+
+                const rootHandle =
+                    await POSFileManager.getRootHandle();
+
+
+                if (!rootHandle) {
+
+                    throw new Error(
+                        "Could not access the selected root folder."
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Fetch Purchase Invoice PDF
+                |--------------------------------------------------------------------------
+                */
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+
+                const response =
+                    await fetch(localPdfUrl, {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/pdf"
+                        }
+                    });
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Check PDF Response
+                |--------------------------------------------------------------------------
+                */
 
                 if (!response.ok) {
 
@@ -185,28 +420,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | Convert PDF to Blob
+                | Convert Response To Blob
                 |--------------------------------------------------------------------------
                 */
 
-                const blob = await response.blob();
+                const blob =
+                    await response.blob();
+
+
+                if (!blob || blob.size === 0) {
+
+                    throw new Error(
+                        "The generated PDF is empty."
+                    );
+                }
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | Safe supplier name
+                | Check PDF Content Type
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    blob.type &&
+                    !blob.type.includes("pdf")
+                ) {
+
+                    console.warn(
+                        "Expected PDF but received:",
+                        blob.type
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Safe Supplier Name
                 |--------------------------------------------------------------------------
                 */
 
                 const safeSupplierName =
                     supplierName
                         .trim()
-                        .replace(/[<>:"/\\|?*]/g, "_");
+                        .replace(
+                            /[<>:"/\\|?*]/g,
+                            "_"
+                        );
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | Date
+                | Current Date
                 |--------------------------------------------------------------------------
                 */
 
@@ -229,6 +494,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 /*
                 |--------------------------------------------------------------------------
                 | Save PDF
+                |
+                | Root Folder
+                |     |
+                |     └── Purchase Invoice
+                |             |
+                |             └── filename.pdf
                 |--------------------------------------------------------------------------
                 */
 
@@ -252,21 +523,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-                button.innerHTML = originalText;
+                /*
+                |--------------------------------------------------------------------------
+                | Restore Button
+                |--------------------------------------------------------------------------
+                */
 
-                button.disabled = false;
+                button.innerHTML =
+                    originalText;
+
+                button.disabled =
+                    false;
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | Open existing print page
+                | Open Existing Print Page
                 |--------------------------------------------------------------------------
                 */
 
-                window.open(
-                    printUrl,
-                    "_blank"
-                );
+                if (printUrl) {
+
+                    window.open(
+                        printUrl,
+                        "_blank"
+                    );
+                }
 
 
             } catch (error) {
@@ -277,15 +559,42 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
+                console.error(
+                    "Error Name:",
+                    error.name
+                );
+
+
+                console.error(
+                    "Error Message:",
+                    error.message
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Show Error
+                |--------------------------------------------------------------------------
+                */
+
                 alert(
                     "Could not save Purchase Invoice:\n\n" +
                     error.message
                 );
 
 
-                button.innerHTML = originalText;
+                /*
+                |--------------------------------------------------------------------------
+                | Restore Button
+                |--------------------------------------------------------------------------
+                */
 
-                button.disabled = false;
+                button.innerHTML =
+                    originalText;
+
+                button.disabled =
+                    false;
+
             }
 
         });
@@ -293,7 +602,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
-</script>
 
 </script>
 @endsection
