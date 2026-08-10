@@ -211,7 +211,14 @@
                     |     └── Purchase Invoice
                     |             └── filename.pdf
                     */
-                    await POSFileManager.saveBlob(filename, blob, ["Purchase Invoice"]);
+                    await POSFileManager.saveBlob(
+    filename,
+    blob,
+    [
+        "Purchase Invoice",
+        safeSupplierName
+    ]
+);
 
                     /* Success */
                     alert(`Purchase Invoice saved successfully!\n\n${filename}`);
@@ -245,4 +252,4 @@
 
     });
     </script>
-@endsection
+@endsections
