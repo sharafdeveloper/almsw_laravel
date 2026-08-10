@@ -64,22 +64,19 @@
                                 <td class="px-4 py-3 text-sm text-right whitespace-nowrap">Rs {{ number_format((float)$inv->total_amount, 2) }}</td>
                                 <td class="px-4 py-3 text-sm text-right space-x-1 whitespace-nowrap">
                                     <a href="{{ route('purchase-invoice.print', $inv) }}"
-   class="purchase-print-btn inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs"
-   data-url="{{ route('purchase-invoice.print-local', $inv) }}"
-   data-invoice-id="{{ $inv->formattedId() }}"
-   data-supplier="{{ optional($inv->supplier)->name ?? 'Unknown' }}">
-
-    <i class="fa-solid fa-print mr-1"></i>
-    Print
-
-</a>
-                                    <!-- <a href="{{ route('purchase-invoice.print', $inv) }}" class="inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs" target="_blank"><i class="fa-solid fa-print mr-1"></i> Print</a> -->
+                                       class="purchase-print-btn inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs"
+                                       data-url="{{ route('purchase-invoice.print-local', $inv) }}"
+                                       data-invoice-id="{{ $inv->formattedId() }}"
+                                       data-supplier="{{ optional($inv->supplier)->name ?? 'Unknown' }}">
+                                        <i class="fa-solid fa-print mr-1"></i>
+                                        Print
+                                    </a>
                                     <a href="{{ route('purchase-invoice.edit', $inv) }}" class="inline-flex px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs"><i class="fa-solid fa-pen mr-1"></i> Edit</a>
                                     <button type="button" @click="deletingId={{ $inv->id }}; deletingLabel='{{ $inv->formattedId() }}'; showDelete=true" class="inline-flex px-2 py-1 bg-red-50 text-red-700 rounded text-xs"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-gray-500">No purchase invoices yet.</td></tr>
+                            <tr><td colspan="8" class="px-4 py-6 text-center text-sm text-gray-500">No purchase invoices yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -124,484 +121,128 @@
             }
         }
     }
+    </script>
+
     <script src="{{ asset('js/local-file-manager.js') }}"></script>
+
     <script>
-// document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
 
-//     document.querySelectorAll(".purchase-print-btn").forEach(button => {
+        document.querySelectorAll(".purchase-print-btn").forEach(button => {
 
-//         button.addEventListener("click", async (event) => {
+            button.addEventListener("click", async (event) => {
 
-//             event.preventDefault();
+                event.preventDefault();
 
-//             const originalText = button.innerHTML;
+                const originalText = button.innerHTML;
 
-//             try {
+                try {
 
-//                 button.disabled = true;
+                    /* Disable Button */
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Preparing...';
 
-//                 button.innerHTML =
-//                     '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+                    /* Get Button Data */
+                    const printUrl = button.href;
+                    const localPdfUrl = button.dataset.url;
+                    const invoiceId = button.dataset.invoiceId;
+                    const supplierName = button.dataset.supplier || "Unknown";
 
+                    /* Validate Data */
+                    if (!localPdfUrl) {
+                        throw new Error("Purchase Invoice PDF URL is missing.");
+                    }
 
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | URLs and invoice information
-//                 |--------------------------------------------------------------------------
-//                 */
+                    if (!invoiceId) {
+                        throw new Error("Purchase Invoice ID is missing.");
+                    }
 
-//                 const printUrl = button.href;
+                    /*
+                    | IMPORTANT: Get Root Folder BEFORE fetch().
+                    | showDirectoryPicker() needs user activation.
+                    */
+                    button.innerHTML = '<i class="fa-solid fa-folder-open mr-1"></i> Checking Folder...';
 
-//                 const localPdfUrl = button.dataset.url;
+                    const rootHandle = await POSFileManager.getRootHandle();
 
-//                 const invoiceId =
-//                     button.dataset.invoiceId;
+                    if (!rootHandle) {
+                        throw new Error("Could not access the selected root folder.");
+                    }
 
-//                 const supplierName =
-//                     button.dataset.supplier || "Unknown";
+                    /* Fetch Purchase Invoice PDF */
+                    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
 
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Fetch PDF
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 const response = await fetch(localPdfUrl, {
-//                     method: "GET",
-//                     headers: {
-//                         "Accept": "application/pdf"
-//                     }
-//                 });
-
-
-//                 if (!response.ok) {
-
-//                     throw new Error(
-//                         `PDF request failed: ${response.status}`
-//                     );
-//                 }
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Convert PDF to Blob
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 const blob = await response.blob();
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Safe supplier name
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 const safeSupplierName =
-//                     supplierName
-//                         .trim()
-//                         .replace(/[<>:"/\\|?*]/g, "_");
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Date
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 const today =
-//                     new Date()
-//                         .toISOString()
-//                         .slice(0, 10);
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Filename
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 const filename =
-//                     `${invoiceId}_${safeSupplierName}_${today}.pdf`;
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Save PDF
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 await POSFileManager.saveBlob(
-//                     filename,
-//                     blob,
-//                     [
-//                         "Purchase Invoice"
-//                     ]
-//                 );
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Success
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 alert(
-//                     `Purchase Invoice saved successfully!\n\n${filename}`
-//                 );
-
-
-//                 button.innerHTML = originalText;
-
-//                 button.disabled = false;
-
-
-//                 /*
-//                 |--------------------------------------------------------------------------
-//                 | Open existing print page
-//                 |--------------------------------------------------------------------------
-//                 */
-
-//                 window.open(
-//                     printUrl,
-//                     "_blank"
-//                 );
-
-
-//             } catch (error) {
-
-//                 console.error(
-//                     "Purchase Invoice Local PDF Error:",
-//                     error
-//                 );
-
-
-//                 alert(
-//                     "Could not save Purchase Invoice:\n\n" +
-//                     error.message
-//                 );
-
-
-//                 button.innerHTML = originalText;
-
-//                 button.disabled = false;
-//             }
-
-//         });
-
-//     });
-
-// });
-// </script>
-document.addEventListener("DOMContentLoaded", () => {
-
-    document.querySelectorAll(".purchase-print-btn").forEach(button => {
-
-        button.addEventListener("click", async (event) => {
-
-            event.preventDefault();
-
-            const originalText = button.innerHTML;
-
-            try {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Disable Button
-                |--------------------------------------------------------------------------
-                */
-
-                button.disabled = true;
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Preparing...';
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Get Button Data
-                |--------------------------------------------------------------------------
-                */
-
-                const printUrl =
-                    button.href;
-
-                const localPdfUrl =
-                    button.dataset.url;
-
-                const invoiceId =
-                    button.dataset.invoiceId;
-
-                const supplierName =
-                    button.dataset.supplier || "Unknown";
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Validate Data
-                |--------------------------------------------------------------------------
-                */
-
-                if (!localPdfUrl) {
-
-                    throw new Error(
-                        "Purchase Invoice PDF URL is missing."
-                    );
-                }
-
-
-                if (!invoiceId) {
-
-                    throw new Error(
-                        "Purchase Invoice ID is missing."
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | IMPORTANT
-                |
-                | Get Root Folder BEFORE fetch().
-                |
-                | showDirectoryPicker() needs user activation.
-                |--------------------------------------------------------------------------
-                */
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-folder-open mr-1"></i> Checking Folder...';
-
-
-                const rootHandle =
-                    await POSFileManager.getRootHandle();
-
-
-                if (!rootHandle) {
-
-                    throw new Error(
-                        "Could not access the selected root folder."
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Fetch Purchase Invoice PDF
-                |--------------------------------------------------------------------------
-                */
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
-
-
-                const response =
-                    await fetch(localPdfUrl, {
+                    const response = await fetch(localPdfUrl, {
                         method: "GET",
                         headers: {
                             "Accept": "application/pdf"
                         }
                     });
 
+                    /* Check PDF Response */
+                    if (!response.ok) {
+                        throw new Error(`PDF request failed: ${response.status}`);
+                    }
 
-                /*
-                |--------------------------------------------------------------------------
-                | Check PDF Response
-                |--------------------------------------------------------------------------
-                */
+                    /* Convert Response To Blob */
+                    const blob = await response.blob();
 
-                if (!response.ok) {
+                    if (!blob || blob.size === 0) {
+                        throw new Error("The generated PDF is empty.");
+                    }
 
-                    throw new Error(
-                        `PDF request failed: ${response.status}`
-                    );
+                    /* Check PDF Content Type */
+                    if (blob.type && !blob.type.includes("pdf")) {
+                        console.warn("Expected PDF but received:", blob.type);
+                    }
+
+                    /* Safe Supplier Name */
+                    const safeSupplierName = supplierName.trim().replace(/[<>:"/\\|?*]/g, "_");
+
+                    /* Current Date */
+                    const today = new Date().toISOString().slice(0, 10);
+
+                    /* Filename */
+                    const filename = `${invoiceId}_${safeSupplierName}_${today}.pdf`;
+
+                    /*
+                    | Save PDF
+                    | Root Folder
+                    |     └── Purchase Invoice
+                    |             └── filename.pdf
+                    */
+                    await POSFileManager.saveBlob(filename, blob, ["Purchase Invoice"]);
+
+                    /* Success */
+                    alert(`Purchase Invoice saved successfully!\n\n${filename}`);
+
+                    /* Restore Button */
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+
+                    /* Open Existing Print Page */
+                    if (printUrl) {
+                        window.open(printUrl, "_blank");
+                    }
+
+                } catch (error) {
+
+                    console.error("Purchase Invoice Local PDF Error:", error);
+                    console.error("Error Name:", error.name);
+                    console.error("Error Message:", error.message);
+
+                    /* Show Error */
+                    alert("Could not save Purchase Invoice:\n\n" + error.message);
+
+                    /* Restore Button */
+                    button.innerHTML = originalText;
+                    button.disabled = false;
                 }
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | Convert Response To Blob
-                |--------------------------------------------------------------------------
-                */
-
-                const blob =
-                    await response.blob();
-
-
-                if (!blob || blob.size === 0) {
-
-                    throw new Error(
-                        "The generated PDF is empty."
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Check PDF Content Type
-                |--------------------------------------------------------------------------
-                */
-
-                if (
-                    blob.type &&
-                    !blob.type.includes("pdf")
-                ) {
-
-                    console.warn(
-                        "Expected PDF but received:",
-                        blob.type
-                    );
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Safe Supplier Name
-                |--------------------------------------------------------------------------
-                */
-
-                const safeSupplierName =
-                    supplierName
-                        .trim()
-                        .replace(
-                            /[<>:"/\\|?*]/g,
-                            "_"
-                        );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Current Date
-                |--------------------------------------------------------------------------
-                */
-
-                const today =
-                    new Date()
-                        .toISOString()
-                        .slice(0, 10);
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Filename
-                |--------------------------------------------------------------------------
-                */
-
-                const filename =
-                    `${invoiceId}_${safeSupplierName}_${today}.pdf`;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Save PDF
-                |
-                | Root Folder
-                |     |
-                |     └── Purchase Invoice
-                |             |
-                |             └── filename.pdf
-                |--------------------------------------------------------------------------
-                */
-
-                await POSFileManager.saveBlob(
-                    filename,
-                    blob,
-                    [
-                        "Purchase Invoice"
-                    ]
-                );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Success
-                |--------------------------------------------------------------------------
-                */
-
-                alert(
-                    `Purchase Invoice saved successfully!\n\n${filename}`
-                );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Restore Button
-                |--------------------------------------------------------------------------
-                */
-
-                button.innerHTML =
-                    originalText;
-
-                button.disabled =
-                    false;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Open Existing Print Page
-                |--------------------------------------------------------------------------
-                */
-
-                if (printUrl) {
-
-                    window.open(
-                        printUrl,
-                        "_blank"
-                    );
-                }
-
-
-            } catch (error) {
-
-                console.error(
-                    "Purchase Invoice Local PDF Error:",
-                    error
-                );
-
-
-                console.error(
-                    "Error Name:",
-                    error.name
-                );
-
-
-                console.error(
-                    "Error Message:",
-                    error.message
-                );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Show Error
-                |--------------------------------------------------------------------------
-                */
-
-                alert(
-                    "Could not save Purchase Invoice:\n\n" +
-                    error.message
-                );
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Restore Button
-                |--------------------------------------------------------------------------
-                */
-
-                button.innerHTML =
-                    originalText;
-
-                button.disabled =
-                    false;
-
-            }
+            });
 
         });
 
     });
-
-});
-
-</script>
+    </script>
 @endsection
