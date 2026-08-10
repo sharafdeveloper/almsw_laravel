@@ -177,6 +177,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     '/sale-invoice/{sale_invoice}/print-local',
     [SaleInvoiceController::class, 'printLocal']
 )->name('sale-invoice.print-local');
+Route::get(
+    'purchase-invoice/{purchase_invoice}/print-local',
+    [PurchaseInvoiceController::class, 'printLocal']
+)->name('purchase-invoice.print-local');
    
 
 });

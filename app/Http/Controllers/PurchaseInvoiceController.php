@@ -116,6 +116,39 @@ class PurchaseInvoiceController extends Controller
 
         return view('admin.purchase-invoice-print', $data + ['browserPrint' => true]);
     }
+    public function printLocal(PurchaseInvoice $purchase_invoice)
+{
+    $purchase_invoice->load(['items.product', 'supplier']);
+
+    $data = [
+        'invoice' => $purchase_invoice,
+    ];
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+        'admin.purchase-invoice-print',
+        $data
+    )->setPaper('a5', 'portrait');
+
+    $supplierName = optional($purchase_invoice->supplier)->name ?? 'Unknown';
+
+    $safeSupplierName = preg_replace(
+        '/[<>:"\/\\\\|?*]/',
+        '_',
+        trim($supplierName)
+    );
+
+    $filename = sprintf(
+        '%s_%s_%s.pdf',
+        $purchase_invoice->formattedId(),
+        $safeSupplierName,
+        now()->format('Y-m-d')
+    );
+
+    return response($pdf->output(), 200)
+        ->header('Content-Type', 'application/pdf')
+        ->header('X-Supplier-Name', $supplierName)
+        ->header('X-Invoice-Filename', $filename);
+}
 
     /* ---------- helpers ---------- */
 
