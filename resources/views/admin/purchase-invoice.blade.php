@@ -205,20 +205,13 @@
                     /* Filename */
                     const filename = `${invoiceId}_${safeSupplierName}_${today}.pdf`;
 
-                    /*
-                    | Save PDF
-                    | Root Folder
-                    |     └── Purchase Invoice
-                    |             └── filename.pdf
-                    */
-                    await POSFileManager.saveBlob(
-    filename,
-    blob,
-    [
-        "Purchase Invoice",
-        safeSupplierName
-    ]
-);
+                    
+                    await POSFileManager.saveBlob(filename,blob,
+                    [
+                        "Purchase Invoice",
+                        safeSupplierName
+                    ]
+                    );
 
                     /* Success */
                     alert(`Purchase Invoice saved successfully!\n\n${filename}`);
