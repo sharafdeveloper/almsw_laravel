@@ -67,9 +67,19 @@
                             <td class="px-4 py-3 text-sm text-right whitespace-nowrap">Rs {{ number_format((float)$inv->total, 2) }}</td>
                             <td class="px-4 py-3 text-sm text-right whitespace-nowrap">Rs {{ number_format((float)$inv->cash_received, 2) }}</td>
                             <td class="px-4 py-3 text-sm text-right space-x-1 whitespace-nowrap">
-                                <a href="{{ route('sale-invoice.print', $inv) }}" class="inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs" target="_blank"><i class="fa-solid fa-print mr-1"></i> Print</a>
+                            <!-- <a href="{{ route('sale-invoice.print', $inv) }}" class="inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs" target="_blank"><i class="fa-solid fa-print mr-1"></i> Print</a> -->
+                             <a href="{{ route('sale-invoice.print', $inv) }}"
+   class="local-print-btn inline-flex px-2 py-1 bg-gray-100 dark:bg-[#11151c] rounded text-xs"
+   data-url="{{ route('sale-invoice.print-local', $inv) }}"
+   data-invoice-id="{{ $inv->formattedId() }}"
+   data-customer="{{ optional($inv->customer)->name ?? 'Unknown' }}">
+
+    <i class="fa-solid fa-print mr-1"></i>
+    Print
+
+</a>
                                 
-                               <button
+    <!-- <button
     type="button"
     class="local-pdf-test inline-flex px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs"
     data-url="{{ route('sale-invoice.print-local', $inv) }}"
@@ -78,7 +88,7 @@
 >
     <i class="fa-solid fa-download mr-1"></i>
     Local PDF Test
-</button>
+</button> -->
 
                                 @if(auth()->check() && auth()->user()->isAdmin())
                                     <a href="{{ route('sale-invoice.edit', $inv) }}" class="inline-flex px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs"><i class="fa-solid fa-pen mr-1"></i> Edit</a>
@@ -133,9 +143,17 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    document.querySelectorAll(".local-pdf-test").forEach(button => {
+      document.querySelectorAll(".local-print-btn").forEach(button => {
 
-        button.addEventListener("click", async () => {
+        button.addEventListener("click", async (event) => {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Stop the normal link temporarily
+            |--------------------------------------------------------------------------
+            */
+
+            event.preventDefault();
 
             try {
 
@@ -146,38 +164,94 @@ document.addEventListener("DOMContentLoaded", () => {
                 button.innerHTML =
                     '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
 
-                const url = button.dataset.url;
-                const invoiceId = button.dataset.invoiceId;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Get invoice information
+                |--------------------------------------------------------------------------
+                */
+
+                const printUrl = button.href;
+
+                const localPdfUrl = button.dataset.url;
+
+                const invoiceId =
+                    button.dataset.invoiceId;
+
                 const customerName =
                     button.dataset.customer || "Unknown";
 
-                const response = await fetch(url, {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Fetch PDF
+                |--------------------------------------------------------------------------
+                */
+
+                const response = await fetch(localPdfUrl, {
                     method: "GET",
                     headers: {
                         "Accept": "application/pdf"
                     }
                 });
 
+
                 if (!response.ok) {
+
                     throw new Error(
                         `PDF request failed: ${response.status}`
                     );
                 }
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Convert PDF to Blob
+                |--------------------------------------------------------------------------
+                */
+
                 const blob = await response.blob();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Safe customer name
+                |--------------------------------------------------------------------------
+                */
 
                 const safeCustomerName =
                     customerName
                         .trim()
                         .replace(/[<>:"/\\|?*]/g, "_");
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Date
+                |--------------------------------------------------------------------------
+                */
+
                 const today =
                     new Date()
                         .toISOString()
                         .slice(0, 10);
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Filename
+                |--------------------------------------------------------------------------
+                */
+
                 const filename =
                     `${invoiceId}_${safeCustomerName}_${today}.pdf`;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Save PDF locally
+                |--------------------------------------------------------------------------
+                */
 
                 await POSFileManager.saveBlob(
                     filename,
@@ -188,12 +262,39 @@ document.addEventListener("DOMContentLoaded", () => {
                     ]
                 );
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Success
+                |--------------------------------------------------------------------------
+                */
+
                 alert(
                     `Invoice saved successfully!\n\n${filename}`
                 );
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Restore button
+                |--------------------------------------------------------------------------
+                */
+
                 button.innerHTML = originalText;
+
                 button.disabled = false;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Open existing print function
+                |--------------------------------------------------------------------------
+                */
+
+                window.open(
+                    printUrl,
+                    "_blank"
+                );
 
             } catch (error) {
 
@@ -202,17 +303,111 @@ document.addEventListener("DOMContentLoaded", () => {
                     error
                 );
 
+
                 alert(
                     "Could not save invoice:\n\n" +
                     error.message
                 );
 
+
                 button.disabled = false;
+
+
+                /*
+                | Restore button text
+                */
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-print mr-1"></i> Print';
             }
 
         });
 
     });
+
+});
+</script>
+
+    // document.querySelectorAll(".local-pdf-test").forEach(button => {
+
+    //     button.addEventListener("click", async () => {
+
+    //         try {
+
+    //             button.disabled = true;
+
+    //             const originalText = button.innerHTML;
+
+    //             button.innerHTML =
+    //                 '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+    //             const url = button.dataset.url;
+    //             const invoiceId = button.dataset.invoiceId;
+    //             const customerName =
+    //                 button.dataset.customer || "Unknown";
+
+    //             const response = await fetch(url, {
+    //                 method: "GET",
+    //                 headers: {
+    //                     "Accept": "application/pdf"
+    //                 }
+    //             });
+
+    //             if (!response.ok) {
+    //                 throw new Error(
+    //                     `PDF request failed: ${response.status}`
+    //                 );
+    //             }
+
+    //             const blob = await response.blob();
+
+    //             const safeCustomerName =
+    //                 customerName
+    //                     .trim()
+    //                     .replace(/[<>:"/\\|?*]/g, "_");
+
+    //             const today =
+    //                 new Date()
+    //                     .toISOString()
+    //                     .slice(0, 10);
+
+    //             const filename =
+    //                 `${invoiceId}_${safeCustomerName}_${today}.pdf`;
+
+    //             await POSFileManager.saveBlob(
+    //                 filename,
+    //                 blob,
+    //                 [
+    //                     "Sale Invoice",
+    //                     safeCustomerName
+    //                 ]
+    //             );
+
+    //             alert(
+    //                 `Invoice saved successfully!\n\n${filename}`
+    //             );
+
+    //             button.innerHTML = originalText;
+    //             button.disabled = false;
+
+    //         } catch (error) {
+
+    //             console.error(
+    //                 "Local PDF Save Error:",
+    //                 error
+    //             );
+
+    //             alert(
+    //                 "Could not save invoice:\n\n" +
+    //                 error.message
+    //             );
+
+    //             button.disabled = false;
+    //         }
+
+    //     });
+
+    // });
 
 });
 </script>
