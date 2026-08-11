@@ -196,13 +196,13 @@
                         console.warn("Expected PDF but received:", blob.type);
                     }
 
-                    /* Safe Supplier Name */
+                    
                     const safeSupplierName = supplierName.trim().replace(/[<>:"/\\|?*]/g, "_");
 
                     /* Current Date */
                     const today = new Date().toISOString().slice(0, 10);
 
-                    /* Filename */
+                    
                     const filename = `${invoiceId}_${safeSupplierName}_${today}.pdf`;
 
                     
@@ -213,10 +213,10 @@
                     ]
                     );
 
-                    /* Success */
+                    
                     alert(`Purchase Invoice saved successfully!\n\n${filename}`);
 
-                    /* Restore Button */
+                    
                     button.innerHTML = originalText;
                     button.disabled = false;
 
@@ -245,4 +245,4 @@
 
     });
     </script>
-@endsections
+@endsection
