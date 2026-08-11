@@ -57,6 +57,45 @@ class BalanceSheetController extends Controller
         // Fallback: HTML view that auto-opens the browser print dialog.
         return view('admin.balance-sheet-print', $data + ['browserPrint' => true]);
     }
+    public function printLocal(Request $request)
+{
+    $q = trim((string) $request->input('q', ''));
+
+    [$all, $totalDebit, $totalCredit] = $this->buildRows($q);
+
+    $data = [
+        'rows'        => $all,
+        'totalDebit'  => $totalDebit,
+        'totalCredit' => $totalCredit,
+    ];
+
+    /*
+     * Generate the same Balance Sheet PDF
+     * as the normal Print button.
+     */
+    if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+
+        $filename =
+            'balance-sheet-' .
+            now()->format('Y-m-d_His') .
+            '.pdf';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'admin.balance-sheet-print',
+            $data
+        )->setPaper('a4', 'portrait');
+
+        return $pdf->stream($filename);
+    }
+
+    /*
+     * Fallback if DomPDF is not available.
+     */
+    return view(
+        'admin.balance-sheet-print',
+        $data + ['browserPrint' => true]
+    );
+}
 
     /**
      * Build the closing balance per customer.

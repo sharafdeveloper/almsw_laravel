@@ -123,6 +123,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Balance Sheet (customer Debit/Credit list)
         Route::get('/balance-sheet',       [BalanceSheetController::class, 'index'])->name('balance-sheet');
         Route::get('/balance-sheet/print', [BalanceSheetController::class, 'print'])->name('balance-sheet.print');
+        Route::get('/balance-sheet/print-local', [BalanceSheetController::class, 'printLocal'])
+    ->name('balance-sheet.print-local');
 
         // Backup
         // Route::get('/backup', [BackupController::class, 'index'])->name('backup.index');
