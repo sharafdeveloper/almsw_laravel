@@ -355,167 +355,113 @@ const POSFileManager = (() => {
     |--------------------------------------------------------------------------
     */
 
-    async function saveBlob(
-        filename,
-        blob,
-        folders = []
-    ) {
+    async function saveBlob(filename, blob, folders = []) {
 
-        if (!filename) {
+        const rootHandle = await getRootHandle();
 
-            throw new Error(
-                "Invoice filename is missing."
-            );
-        }
-
-
-        if (!blob) {
-
-            throw new Error(
-                "PDF data is empty. The invoice could not be saved."
-            );
-        }
-
-
-        if (!(blob instanceof Blob)) {
-
-            throw new Error(
-                "Invalid PDF data received."
-            );
-        }
-
+        let currentHandle = rootHandle;
 
         /*
-        |--------------------------------------------------------------------------
-        | Get Root Folder
-        |--------------------------------------------------------------------------
-        */
+         * Today's date folder.
+         *
+         * Root:
+         * C:\Users\CC\Documents\date
+         *
+         * Today:
+         * 11-08-2026
+         */
+        const now = new Date();
 
-        const rootHandle =
-            await getRootHandle();
+        const day =
+            String(now.getDate()).padStart(2, "0");
 
+        const month =
+            String(now.getMonth() + 1).padStart(2, "0");
 
-        let currentHandle =
-            rootHandle;
+        const year =
+            now.getFullYear();
 
+        const dateFolder =
+            `${day}-${month}-${year}`;
 
         /*
-        |--------------------------------------------------------------------------
-        | Create / Open Folders
-        |--------------------------------------------------------------------------
-        */
+         * Open today's existing date folder.
+         *
+         * IMPORTANT:
+         * create:false means we will NOT create
+         * the date folder automatically.
+         */
+        try {
 
+            currentHandle =
+                await currentHandle.getDirectoryHandle(
+                    dateFolder,
+                    {
+                        create: false
+                    }
+                );
+
+        } catch (error) {
+
+            throw new Error(
+                `Today's date folder "${dateFolder}" was not found inside the selected date folder. Please create it first.`
+            );
+        }
+
+        /*
+         * Create/open the required record folders.
+         *
+         * Example:
+         *
+         * Purchase Invoice
+         *      └── Ali
+         *
+         * OR
+         *
+         * sale Invoice
+         *      └── Ali
+         *
+         * OR
+         *
+         * Cashbook
+         */
         for (const folderName of folders) {
 
             if (!folderName) {
                 continue;
             }
 
-
-            try {
-
-                currentHandle =
-                    await currentHandle.getDirectoryHandle(
-                        folderName,
-                        {
-                            create: true
-                        }
-                    );
-
-            } catch (error) {
-
-                console.error(
-                    "Folder Creation Error:",
-                    error
-                );
-
-                throw new Error(
-                    `Could not create or access folder "${folderName}".`
-                );
-            }
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create / Open PDF File
-        |--------------------------------------------------------------------------
-        */
-
-        let fileHandle;
-
-        try {
-
-            fileHandle =
-                await currentHandle.getFileHandle(
-                    filename,
+            currentHandle =
+                await currentHandle.getDirectoryHandle(
+                    folderName,
                     {
                         create: true
                     }
                 );
-
-        } catch (error) {
-
-            console.error(
-                "File Creation Error:",
-                error
-            );
-
-            throw new Error(
-                `Could not create invoice file "${filename}".`
-            );
         }
 
-
         /*
-        |--------------------------------------------------------------------------
-        | Write PDF
-        |--------------------------------------------------------------------------
-        */
+         * Create / overwrite PDF file.
+         */
+        const fileHandle =
+            await currentHandle.getFileHandle(
+                filename,
+                {
+                    create: true
+                }
+            );
 
-        let writable = null;
+        const writable =
+            await fileHandle.createWritable();
 
         try {
 
-            writable =
-                await fileHandle.createWritable();
-
             await writable.write(blob);
 
+        } finally {
+
             await writable.close();
-
-            writable = null;
-
-        } catch (error) {
-
-            console.error(
-                "PDF Write Error:",
-                error
-            );
-
-
-            /*
-            | Try to close writable stream if something failed
-            */
-
-            if (writable) {
-
-                try {
-                    await writable.abort();
-                } catch (abortError) {
-                    console.error(
-                        "Writable Abort Error:",
-                        abortError
-                    );
-                }
-            }
-
-
-            throw new Error(
-                `Could not save invoice "${filename}". Please check folder permission and available storage.`
-            );
         }
-
 
         return true;
     }
@@ -534,6 +480,6 @@ const POSFileManager = (() => {
         getRootHandle
 
     };
-   
+
 
 })();
