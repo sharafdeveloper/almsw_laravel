@@ -159,10 +159,18 @@ document.addEventListener("DOMContentLoaded", () => {
                  *         └── Cashbook
                  *              └── Cashbook_....pdf
                  */
+                const now = new Date();
+
+                const day = String(now.getDate()).padStart(2, "0");
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const year = now.getFullYear();
+                const today = `${day}-${month}-${year}`;
+                
                 await POSFileManager.saveBlob(
                     filename,
                     blob,
                     [
+                        today,
                         "Cashbook"
                     ]
                 );
