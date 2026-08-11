@@ -1,4 +1,3 @@
-```blade
 @extends('layouts.admin')
 
 @section('title', 'Sale Invoices')
@@ -764,4 +763,4 @@ const today = `${day}-${month}-${year}`;
     </script>
 
 @endsection
-```
+
