@@ -23,11 +23,19 @@
                         <a href="{{ route('balance-sheet') }}" class="px-3 py-2 bg-gray-100 dark:bg-[#11151c] rounded-lg text-sm">Clear</a>
                     @endif
                 </form>
+                <a href="{{ route('balance-sheet.print', ['q' => $q]) }}"
+   class="balance-sheet-print-btn inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow text-sm"
+   data-url="{{ route('balance-sheet.print-local', ['q' => $q]) }}"
+   data-query="{{ $q }}">
 
-                <a href="{{ route('balance-sheet.print', ['q' => $q]) }}" target="_blank"
+    <i class="fa-solid fa-print mr-2"></i>
+    Print
+</a>
+
+                <!-- <a href="{{ route('balance-sheet.print', ['q' => $q]) }}" target="_blank"
                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow text-sm">
                     <i class="fa-solid fa-print mr-2"></i> Print
-                </a>
+                </a> -->
             </div>
         </div>
 
@@ -68,4 +76,145 @@
             <p class="text-xs text-gray-400 mt-2">Note: Total Debit &amp; Credit shown above are for <strong>all</strong> matching customers, not just this page.</p>
         </div>
     </div>
+
+    <script src="{{ asset('js/local-file-manager.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const button =
+        document.querySelector(".balance-sheet-print-btn");
+
+    if (!button) {
+        return;
+    }
+
+    button.addEventListener("click", async (event) => {
+
+        event.preventDefault();
+
+        const originalText = button.innerHTML;
+
+        try {
+
+            button.disabled = true;
+
+            button.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...';
+
+            const localPdfUrl =
+                button.dataset.url;
+
+            const query =
+                button.dataset.query || "";
+
+            if (!localPdfUrl) {
+                throw new Error(
+                    "Balance Sheet PDF URL is missing."
+                );
+            }
+
+            /*
+             * Get root folder first.
+             */
+            const rootHandle =
+                await POSFileManager.getRootHandle();
+
+            if (!rootHandle) {
+                throw new Error(
+                    "Could not access the selected root folder."
+                );
+            }
+
+            /*
+             * Generate / fetch PDF.
+             */
+            const response =
+                await fetch(localPdfUrl, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/pdf"
+                    }
+                });
+
+            if (!response.ok) {
+                throw new Error(
+                    `PDF request failed: ${response.status}`
+                );
+            }
+
+            const blob =
+                await response.blob();
+
+            if (!blob || blob.size === 0) {
+                throw new Error(
+                    "The generated Balance Sheet PDF is empty."
+                );
+            }
+
+            /*
+             * Current date.
+             */
+            const today =
+                new Date()
+                    .toISOString()
+                    .slice(0, 10);
+
+            /*
+             * Filename.
+             */
+            const filename =
+                `Balance_Sheet_${today}.pdf`;
+
+            /*
+             * Save:
+             *
+             * Documents
+             *   └── date
+             *       └── balance sheet
+             *           └── Balance_Sheet_....pdf
+             */
+            await POSFileManager.saveBlob(
+                filename,
+                blob,
+                [
+                    "balance sheet"
+                ]
+            );
+
+            alert(
+                `Balance Sheet saved successfully!\n\n${filename}`
+            );
+
+            /*
+             * Open the normal Print/PDF as well.
+             */
+            window.open(
+                button.href,
+                "_blank"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Balance Sheet Local PDF Error:",
+                error
+            );
+
+            alert(
+                "Could not save Balance Sheet:\n\n" +
+                error.message
+            );
+
+        } finally {
+
+            button.innerHTML =
+                originalText;
+
+            button.disabled = false;
+        }
+    });
+
+});
+</script>
 @endsection
