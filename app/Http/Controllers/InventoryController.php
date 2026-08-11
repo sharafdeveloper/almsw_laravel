@@ -68,7 +68,7 @@ class InventoryController extends Controller
 
     public function destroy(Request $request, Inventory $inventory)
     {
-        // Backend implemented per client request; UI may hide this button.
+        
         $inventory->delete();
 
         if ($request->expectsJson()) {

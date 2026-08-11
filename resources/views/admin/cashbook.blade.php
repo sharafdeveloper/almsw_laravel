@@ -17,7 +17,7 @@
                     <input type="date" name="to" value="{{ $to }}" class="bg-transparent text-sm focus:outline-none">
                     <button class="text-sm text-[#7c3aed] font-medium">Apply</button>
                 </form>
-                //print button and local saving 
+                 
                 <a href="{{ route('cashbook.print', ['from'=>$from,'to'=>$to]) }}"
    data-local-url="{{ route('cashbook.print-local', ['from'=>$from,'to'=>$to]) }}"
    data-from="{{ $from }}"
