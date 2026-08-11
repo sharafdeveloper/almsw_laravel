@@ -200,14 +200,20 @@
                     const safeSupplierName = supplierName.trim().replace(/[<>:"/\\|?*]/g, "_");
 
                     /* Current Date */
-                    const today = new Date().toISOString().slice(0, 10);
+                    const now = new Date();
 
-                    
+                    const day = String(now.getDate()).padStart(2, "0");
+                    const month = String(now.getMonth() + 1).padStart(2, "0");
+                    const year = now.getFullYear();
+
+                    const today = `${day}-${month}-${year}`;
+
                     const filename = `${invoiceId}_${safeSupplierName}_${today}.pdf`;
 
                     
                     await POSFileManager.saveBlob(filename,blob,
                     [
+                        today,
                         "Purchase Invoice",
                         safeSupplierName
                     ]
