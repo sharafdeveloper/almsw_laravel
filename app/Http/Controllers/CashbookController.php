@@ -107,6 +107,45 @@ class CashbookController extends Controller
         return view('admin.cashbook-print', compact('from', 'to', 'opening', 'totals', 'printPages'));
     }
 
+
+    public function printLocal(Request $request)
+{
+    [$from, $to, $opening, $entries, $totals] = $this->compute($request);
+
+    // Same layout/data as normal Cashbook Print
+    $cashIn = array_values(
+        array_filter($entries, fn($e) => ($e['in'] ?? 0) > 0)
+    );
+
+    $cashOut = array_values(
+        array_filter($entries, fn($e) => ($e['out'] ?? 0) > 0)
+    );
+
+    $chunkSize = 20;
+
+    $inChunks = array_chunk($cashIn, $chunkSize);
+    $outChunks = array_chunk($cashOut, $chunkSize);
+
+    $pages = max(count($inChunks), count($outChunks));
+
+    $printPages = [];
+
+    for ($i = 0; $i < $pages; $i++) {
+        $printPages[] = [
+            'in' => $inChunks[$i] ?? [],
+            'out' => $outChunks[$i] ?? [],
+        ];
+    }
+
+    return view('admin.cashbook-print', compact(
+        'from',
+        'to',
+        'opening',
+        'totals',
+        'printPages'
+    ));
+}
+
     /**
      * Compute the entries for the period and build running balance starting from opening.
      * @return array{0:string,1:string,2:float,3:array,4:array}
@@ -235,4 +274,6 @@ class CashbookController extends Controller
         }
         return $out;
     }
+
+    
 }

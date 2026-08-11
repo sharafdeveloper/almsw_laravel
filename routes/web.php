@@ -46,6 +46,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cashbook',           [CashbookController::class, 'index'])->name('cashbook');
         Route::get('/cashbook/export',    [CashbookController::class, 'exportCsv'])->name('cashbook.export');
         Route::get('/cashbook/print',     [CashbookController::class, 'print'])->name('cashbook.print');
+        // print rroute of cashbook
+        Route::get('/cashbook/print-local', [CashbookController::class, 'printLocal'])->name('cashbook.print-local');
 
         // Customer search utilities (Admin + Employee)
         Route::get('/admin/customers/search', function(\Illuminate\Http\Request $request) {
@@ -181,6 +183,12 @@ Route::get(
     'purchase-invoice/{purchase_invoice}/print-local',
     [PurchaseInvoiceController::class, 'printLocal']
 )->name('purchase-invoice.print-local');
+
+Route::get('/cashbook/print', [CashbookController::class, 'print'])
+    ->name('cashbook.print');
+
+Route::get('/cashbook/print-local', [CashbookController::class, 'printLocal'])
+    ->name('cashbook.print-local');
    
 
 });
